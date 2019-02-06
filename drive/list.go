@@ -7,6 +7,7 @@ import (
 	"google.golang.org/api/googleapi"
 	"io"
 	"text/tabwriter"
+	"encoding/json"
 )
 
 type ListFilesArgs struct {
@@ -18,6 +19,7 @@ type ListFilesArgs struct {
 	SkipHeader  bool
 	SizeInBytes bool
 	AbsPath     bool
+	JsonOutput	bool
 }
 
 func (self *Drive) List(args ListFilesArgs) (err error) {
@@ -50,6 +52,7 @@ func (self *Drive) List(args ListFilesArgs) (err error) {
 		NameWidth:   int(args.NameWidth),
 		SkipHeader:  args.SkipHeader,
 		SizeInBytes: args.SizeInBytes,
+		JsonOutput:	 args.JsonOutput,
 	})
 
 	return
@@ -103,27 +106,50 @@ type PrintFileListArgs struct {
 	NameWidth   int
 	SkipHeader  bool
 	SizeInBytes bool
+	JsonOutput	bool
 }
 
 func PrintFileList(args PrintFileListArgs) {
-	w := new(tabwriter.Writer)
-	w.Init(args.Out, 0, 0, 3, ' ', 0)
 
-	if !args.SkipHeader {
-		fmt.Fprintln(w, "Id\tName\tType\tSize\tCreated")
+	if args.JsonOutput {
+
+		type JsonResult struct {
+			Message 	string
+			Files		[]*drive.File
+		}
+
+		jsonResult := JsonResult {
+			Message: 	"Success",
+			Files: 		args.Files,
+		}
+
+		b, err := json.MarshalIndent(jsonResult, "", "  ")
+		if err != nil {
+			jsonResult.Message = "Fail"
+		}
+		
+		args.Out.Write(b)
+
+	} else {
+		w := new(tabwriter.Writer)
+		w.Init(args.Out, 0, 0, 3, ' ', 0)
+
+		if !args.SkipHeader {
+			fmt.Fprintln(w, "Id\tName\tType\tSize\tCreated")
+		}
+
+		for _, f := range args.Files {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				f.Id,
+				truncateString(f.Name, args.NameWidth),
+				filetype(f),
+				formatSize(f.Size, args.SizeInBytes),
+				formatDatetime(f.CreatedTime),
+			)
+		}
+
+		w.Flush()
 	}
-
-	for _, f := range args.Files {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-			f.Id,
-			truncateString(f.Name, args.NameWidth),
-			filetype(f),
-			formatSize(f.Size, args.SizeInBytes),
-			formatDatetime(f.CreatedTime),
-		)
-	}
-
-	w.Flush()
 }
 
 func filetype(f *drive.File) string {

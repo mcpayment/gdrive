@@ -45,6 +45,12 @@ func main() {
 			Patterns:    []string{"--service-account"},
 			Description: "Oauth service account filename, used for server to server communication without user interaction (filename path is relative to config dir)",
 		},
+		cli.BoolFlag{
+			Name:        "jsonOutput",
+			Patterns:    []string{"--json-output"},
+			Description: "Shows output in JSON format",
+			OmitValue:   true,
+		},
 	}
 
 	handlers := []*cli.Handler{
