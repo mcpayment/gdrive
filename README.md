@@ -238,6 +238,7 @@ global:
   --refresh-token <refreshToken>   Oauth refresh token used to get access token (for advanced users)
   --access-token <accessToken>     Oauth access token, only recommended for short-lived requests because of short lifetime (for advanced users)
   --service-account <accountFile>  Oauth service account filename, used for server to server communication without user interaction (file is relative to config dir)
+  --json-output                    Prints out result in JSON format
   
 options:
   --bytes   Show size in bytes
